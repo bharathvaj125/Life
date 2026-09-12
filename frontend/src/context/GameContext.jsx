@@ -82,8 +82,15 @@ export function GameProvider({ children }) {
     }
   }, [user]);
 
+  // Keyed on the user's id (a stable primitive), not the `user` object itself:
+  // fetchCharacterData replaces `user` with a fresh object on every call, and
+  // that object is a dependency of these fetch* callbacks. Depending on the
+  // object (or the callbacks) here would re-fire this effect after every
+  // fetch, looping fetches forever.
+  const userId = user?.id ?? null;
+
   useEffect(() => {
-    if (user) {
+    if (userId) {
       fetchCharacterData();
       fetchMissions();
       fetchActivity();
@@ -95,7 +102,8 @@ export function GameProvider({ children }) {
       setShopItems([]);
       setInventory([]);
     }
-  }, [user, fetchCharacterData, fetchMissions, fetchActivity, fetchShop]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   /**
    * Optimistic Mission Completion
