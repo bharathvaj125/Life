@@ -6,6 +6,7 @@ import {
   Circle,
   Plus,
   Trash2,
+  Pencil,
   Calendar,
   Crosshair,
   Sparkles,
@@ -24,11 +25,12 @@ const DIFFICULTY_CONFIG = {
 };
 
 export function MissionHub() {
-  const { missions, loadingMissions, completeMission, createMission, deleteMission } = useGame();
+  const { missions, loadingMissions, completeMission, createMission, updateMission, deleteMission } = useGame();
   const [filter, setFilter] = useState('active'); // 'active' | 'completed' | 'all'
   const [isCreating, setIsCreating] = useState(false);
+  const [editingMissionId, setEditingMissionId] = useState(null);
 
-  // New Mission Form State
+  // Mission Form State (shared by create and edit)
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [difficulty, setDifficulty] = useState('medium');
@@ -43,7 +45,29 @@ export function MissionHub() {
     return true;
   });
 
-  const handleCreateSubmit = async (e) => {
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setDifficulty('medium');
+    setAttribute('Intellect');
+    setDueDate('');
+    setFormError('');
+    setEditingMissionId(null);
+    setIsCreating(false);
+  };
+
+  const openEditForm = (mission) => {
+    setEditingMissionId(mission.id);
+    setTitle(mission.title || '');
+    setDescription(mission.description || '');
+    setDifficulty(mission.difficulty || 'medium');
+    setAttribute(mission.attribute || 'Intellect');
+    setDueDate(mission.due_date || '');
+    setFormError('');
+    setIsCreating(true);
+  };
+
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
     if (!title.trim()) {
@@ -57,20 +81,21 @@ export function MissionHub() {
 
     setSubmitting(true);
     try {
-      await createMission({
+      const payload = {
         title: title.trim(),
         description: description.trim(),
         difficulty,
         attribute,
         due_date: dueDate || null,
-      });
-      setTitle('');
-      setDescription('');
-      setDifficulty('medium');
-      setDueDate('');
-      setIsCreating(false);
+      };
+      if (editingMissionId) {
+        await updateMission(editingMissionId, payload);
+      } else {
+        await createMission(payload);
+      }
+      resetForm();
     } catch (err) {
-      setFormError(err.message || 'Failed to dispatch mission.');
+      setFormError(err.message || (editingMissionId ? 'Failed to update mission.' : 'Failed to dispatch mission.'));
     } finally {
       setSubmitting(false);
     }
@@ -120,24 +145,25 @@ export function MissionHub() {
           variant="primary"
           size="sm"
           icon={Plus}
-          onClick={() => setIsCreating(!isCreating)}
+          onClick={() => (isCreating ? resetForm() : setIsCreating(true))}
         >
           Dispatch New Mission
         </CyberButton>
       </div>
 
-      {/* Dispatch Mission Form / Modal Panel */}
+      {/* Dispatch/Edit Mission Form Panel */}
       {isCreating && (
         <CyberCard glow glowColor="cyan" className="p-6 border-l-4 border-l-[#00F0FF]">
           <div className="flex items-center justify-between border-b border-[#223254] pb-3 mb-4">
             <div className="flex items-center gap-2">
               <Crosshair className="w-4 h-4 text-[#00F0FF]" />
               <h3 className="font-display text-sm font-bold uppercase tracking-wider text-white">
-                Initialize Mission Protocol
+                {editingMissionId ? 'Amend Mission Protocol' : 'Initialize Mission Protocol'}
               </h3>
             </div>
             <button
-              onClick={() => setIsCreating(false)}
+              onClick={resetForm}
+              aria-label="Close mission form"
               className="text-[#94A3B8] hover:text-white cursor-pointer"
             >
               <X className="w-4 h-4" />
@@ -150,7 +176,7 @@ export function MissionHub() {
             </div>
           )}
 
-          <form onSubmit={handleCreateSubmit} className="space-y-4">
+          <form onSubmit={handleFormSubmit} className="space-y-4">
             <div>
               <label htmlFor="mission-title" className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
                 Mission Directive *
@@ -235,7 +261,7 @@ export function MissionHub() {
             </div>
 
             <div className="flex justify-end gap-3 pt-3 border-t border-[#223254]">
-              <CyberButton variant="ghost" size="sm" onClick={() => setIsCreating(false)}>
+              <CyberButton variant="ghost" size="sm" onClick={resetForm}>
                 Cancel
               </CyberButton>
               <CyberButton
@@ -244,7 +270,13 @@ export function MissionHub() {
                 size="sm"
                 disabled={submitting}
               >
-                {submitting ? 'Encrypting...' : 'Authorize Mission'}
+                {submitting
+                  ? editingMissionId
+                    ? 'Updating...'
+                    : 'Encrypting...'
+                  : editingMissionId
+                  ? 'Save Amendment'
+                  : 'Authorize Mission'}
               </CyberButton>
             </div>
           </form>
@@ -281,7 +313,7 @@ export function MissionHub() {
               Your mission queue is currently clear, Operative. Dispatch a new objective to begin earning Uplink XP and Credits.
             </p>
           </div>
-          <CyberButton variant="secondary" size="sm" onClick={() => setIsCreating(true)}>
+          <CyberButton variant="secondary" size="sm" onClick={() => { resetForm(); setIsCreating(true); }}>
             Initialize First Directive
           </CyberButton>
         </div>
@@ -370,11 +402,21 @@ export function MissionHub() {
                 </div>
 
                 {/* Mission Actions */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                  {!isCompleted && (
+                    <button
+                      onClick={() => openEditForm(mission)}
+                      title="Amend Directive"
+                      aria-label={`Edit mission: ${mission.title}`}
+                      className="p-1.5 text-[#64748B] hover:text-[#00F0FF] transition-colors cursor-pointer"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
                     onClick={() => deleteMission(mission.id)}
                     title="Purge Directive"
-                    aria-label="Delete mission"
+                    aria-label={`Delete mission: ${mission.title}`}
                     className="p-1.5 text-[#64748B] hover:text-[#FF0055] transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
