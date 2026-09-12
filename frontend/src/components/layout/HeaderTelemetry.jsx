@@ -97,9 +97,9 @@ export function HeaderTelemetry({ activeTab, setActiveTab }) {
         </div>
 
         {/* Live Operative Telemetry Bar */}
-        <div className="flex items-center gap-3 sm:gap-5">
+        <div className="flex items-center gap-2 sm:gap-3 lg:gap-5 min-w-0">
           {/* Level Stat */}
-          <div className="flex items-center gap-2 bg-[#0D121F] border border-[#223254] px-2.5 py-1 cyber-cut-sm">
+          <div className="hidden sm:flex items-center gap-2 bg-[#0D121F] border border-[#223254] px-2.5 py-1 cyber-cut-sm">
             <Zap className="w-4 h-4 text-[#00F0FF]" />
             <div className="flex flex-col">
               <span className="text-[9px] font-telemetry uppercase text-[#64748B]">LEVEL</span>
@@ -110,7 +110,7 @@ export function HeaderTelemetry({ activeTab, setActiveTab }) {
           </div>
 
           {/* Credits Stat */}
-          <div className="flex items-center gap-2 bg-[#0D121F] border border-[#223254] px-2.5 py-1 cyber-cut-sm">
+          <div className="hidden sm:flex items-center gap-2 bg-[#0D121F] border border-[#223254] px-2.5 py-1 cyber-cut-sm">
             <Coins className="w-4 h-4 text-[#FFB800]" />
             <div className="flex flex-col">
               <span className="text-[9px] font-telemetry uppercase text-[#64748B]">CREDITS</span>
@@ -121,7 +121,7 @@ export function HeaderTelemetry({ activeTab, setActiveTab }) {
           </div>
 
           {/* Uplink Streak Stat */}
-          <div className="flex items-center gap-2 bg-[#0D121F] border border-[#223254] px-2.5 py-1 cyber-cut-sm">
+          <div className="hidden lg:flex items-center gap-2 bg-[#0D121F] border border-[#223254] px-2.5 py-1 cyber-cut-sm">
             <Flame className="w-4 h-4 text-[#FF0055]" />
             <div className="flex flex-col">
               <span className="text-[9px] font-telemetry uppercase text-[#64748B]">STREAK</span>
@@ -131,9 +131,17 @@ export function HeaderTelemetry({ activeTab, setActiveTab }) {
             </div>
           </div>
 
+          {/* Compact mobile-only level badge, so rank is still visible below sm */}
+          <div className="flex sm:hidden items-center gap-1.5 bg-[#0D121F] border border-[#223254] px-2 py-1 cyber-cut-sm shrink-0">
+            <Zap className="w-3.5 h-3.5 text-[#00F0FF]" />
+            <span className="font-display text-xs font-bold text-[#E2E8F0] leading-none">
+              {levelState.level}
+            </span>
+          </div>
+
           {/* User profile identifier & Logout */}
-          <div className="flex items-center gap-2 border-l border-[#223254] pl-3">
-            <div className="hidden sm:flex flex-col text-right">
+          <div className="flex items-center gap-2 border-l border-[#223254] pl-2 sm:pl-3 shrink-0">
+            <div className="hidden md:flex flex-col text-right">
               <span className="text-xs font-telemetry font-bold text-white uppercase">{user.username}</span>
               <span className="text-[10px] text-[#00FF9D] font-mono-cyber">ONLINE</span>
             </div>
