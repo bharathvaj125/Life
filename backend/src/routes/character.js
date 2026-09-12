@@ -2,6 +2,7 @@ import { Router } from 'express';
 import db from '../db/index.js';
 import { requireAuth } from '../middleware/auth.js';
 import { computeLevelState } from '../utils/rpgEngine.js';
+import { computeAchievements } from '../utils/achievements.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -15,7 +16,22 @@ router.get('/me', (req, res) => {
 
   const levelState = computeLevelState(user.xp);
   const attributes = db.prepare('SELECT * FROM attributes WHERE user_id = ? ORDER BY name').all(req.userId);
-  res.json({ user: safeUser, levelState, attributes });
+
+  const { count: completedTasksCount } = db
+    .prepare("SELECT COUNT(*) as count FROM tasks WHERE user_id = ? AND status = 'completed'")
+    .get(req.userId);
+  const { count: inventoryCount } = db
+    .prepare('SELECT COUNT(*) as count FROM inventory WHERE user_id = ?')
+    .get(req.userId);
+
+  const achievements = computeAchievements({
+    level: levelState.level,
+    longestStreak: user.longest_streak || 0,
+    completedTasksCount,
+    inventoryCount,
+  });
+
+  res.json({ user: safeUser, levelState, attributes, achievements });
 });
 
 router.get('/activity', (req, res) => {

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../lib/api';
 import { sound } from '../lib/sound';
 import { useAuth } from './AuthContext';
@@ -21,6 +21,8 @@ export function GameProvider({ children }) {
   const [activityLogs, setActivityLogs] = useState([]);
   const [shopItems, setShopItems] = useState([]);
   const [inventory, setInventory] = useState([]);
+  const [achievements, setAchievements] = useState([]);
+  const [achievementToast, setAchievementToast] = useState(null);
 
   const [loadingMissions, setLoadingMissions] = useState(true);
   const [loadingCharacter, setLoadingCharacter] = useState(true);
@@ -30,6 +32,15 @@ export function GameProvider({ children }) {
   // Celebration state
   const [celebration, setCelebration] = useState(null); // { type: 'level_up' | 'streak', data }
 
+  // Ref mirror of `achievements` so fetchCharacterData can diff against the
+  // previous unlock state without depending on `achievements` itself — adding
+  // it as a dependency here would recreate this callback on every fetch and
+  // reintroduce the same re-fetch-loop class of bug fixed above.
+  const achievementsRef = useRef([]);
+  useEffect(() => {
+    achievementsRef.current = achievements;
+  }, [achievements]);
+
   const fetchCharacterData = useCallback(async () => {
     if (!user) return;
     try {
@@ -38,12 +49,29 @@ export function GameProvider({ children }) {
       setUser(data.user);
       setLevelState(data.levelState);
       setAttributes(data.attributes || []);
+
+      if (data.achievements) {
+        const prevUnlockedIds = new Set(
+          achievementsRef.current.filter((a) => a.unlocked).map((a) => a.id)
+        );
+        const newlyUnlocked = data.achievements.filter(
+          (a) => a.unlocked && !prevUnlockedIds.has(a.id)
+        );
+        // Skip the toast on the very first load (nothing to compare against yet)
+        if (newlyUnlocked.length > 0 && achievementsRef.current.length > 0) {
+          sound.playPurchase();
+          setAchievementToast(newlyUnlocked[0]);
+        }
+        setAchievements(data.achievements);
+      }
     } catch (err) {
       setNetworkError(err.message);
     } finally {
       setLoadingCharacter(false);
     }
   }, [user, setUser]);
+
+  const dismissAchievementToast = () => setAchievementToast(null);
 
   const fetchMissions = useCallback(async () => {
     if (!user) return;
@@ -258,6 +286,9 @@ export function GameProvider({ children }) {
         activityLogs,
         shopItems,
         inventory,
+        achievements,
+        achievementToast,
+        dismissAchievementToast,
         loadingMissions,
         loadingCharacter,
         loadingShop,

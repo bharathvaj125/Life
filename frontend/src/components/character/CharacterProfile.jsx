@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useGame } from '../../context/GameContext';
 import { CyberCard, CyberBadge, CyberProgressBar } from '../ui/CyberComponents';
+import { AchievementsPanel } from './AchievementsPanel';
 import {
   Brain,
   Dumbbell,
@@ -24,7 +25,7 @@ const ICON_MAP = {
 
 export function CharacterProfile() {
   const { user } = useAuth();
-  const { levelState, attributes, activityLogs, loadingCharacter } = useGame();
+  const { levelState, attributes, activityLogs, achievements, loadingCharacter } = useGame();
 
   if (loadingCharacter) {
     return (
@@ -96,6 +97,9 @@ export function CharacterProfile() {
           </div>
         </div>
       </CyberCard>
+
+      {/* Uplink Commendations (Achievements) */}
+      <AchievementsPanel achievements={achievements} />
 
       {/* Attribute Matrix */}
       <CyberCard className="p-5 space-y-4">

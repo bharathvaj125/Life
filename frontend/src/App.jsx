@@ -6,11 +6,12 @@ import { CharacterProfile } from './components/character/CharacterProfile';
 import { MissionHub } from './components/missions/MissionHub';
 import { BlackMarketShop } from './components/shop/BlackMarketShop';
 import { CelebrationModal } from './components/fx/CelebrationModal';
+import { AchievementToast } from './components/fx/AchievementToast';
 import { AuthPage } from './pages/AuthPage';
 
 function DashboardView() {
   const [activeTab, setActiveTab] = useState('missions');
-  const { celebration, closeCelebration } = useGame();
+  const { celebration, closeCelebration, achievementToast, dismissAchievementToast } = useGame();
 
   return (
     <div className="min-h-screen bg-[#07090E] cyber-grid-bg text-[#E2E8F0] flex flex-col selection:bg-[#00F0FF]/25 selection:text-[#00F0FF]">
@@ -32,6 +33,9 @@ function DashboardView() {
 
       {/* Fullscreen Cyber Celebration Modal for Level Up & Streak Milestones */}
       <CelebrationModal celebration={celebration} onClose={closeCelebration} />
+
+      {/* Corner toast for achievement unlocks */}
+      <AchievementToast achievement={achievementToast} onDismiss={dismissAchievementToast} />
 
       {/* Cyberpunk Status Footer */}
       <footer className="border-t border-[#223254] py-4 bg-[#07090E]/90 text-center text-xs font-telemetry text-[#64748B]">
