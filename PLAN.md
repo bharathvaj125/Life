@@ -61,7 +61,8 @@ Tell me once you've logged into Vercel/Railway and I'll drive the rest (env vars
 
 ---
 
-## Phase 4 — Wow / Innovation Layer *(time-permitting, after Phases 1–3 are solid)*
+## Phase 4 — Wow / Innovation Layer — first item shipped
+*(remaining items time-permitting)*
 
 **Are wow features actually needed?** Yes — per PS §7, Design/UX carries a "Crucial Warning" that generic execution loses significant marks, and Rulebook weights Innovation & Creativity + UI/UX at 25% combined. But the checklist items (auth, CRUD, leveling, streaks, attributes, economy, responsive/accessible) are the **floor** — missing any of those risks a zero regardless of how flashy the rest is. So: finish Phases 1–3 first, then spend remaining time here.
 
@@ -70,7 +71,7 @@ Ranked by impact vs. effort, given what's already built:
 | Idea | Effort | Why |
 |---|---|---|
 | Wire `aria-live` celebration announcements (Phase 1) to also *look* better — screen shake / chromatic aberration pulse on level-up | S | Reuses existing `CelebrationModal`, dual-purpose with accessibility work |
-| Achievement/badge unlock system | M | Badge UI elements already exist in multiple components — check if they're static decoration or wired to real unlock logic; if static, this is the highest-leverage gap between "looks gamified" and "is gamified" |
+| ~~Achievement/badge unlock system~~ | ~~M~~ | **Done.** Confirmed the existing "badge" UI was purely decorative (no unlock logic anywhere). Built a real 10-achievement system computed server-side from actual stats (level/streak/completion-count/first-purchase), unit-tested, with a live corner-toast + chime on unlock. Verified: fresh account starts 0/10, completing a mission unlocks "First Blood" immediately. |
 | XP boost consumables actually applying an effect | M | Friend's own README lists this as a known gap ("Phase 2" in original notes) |
 | Boss-battle framing for streak milestones (3/7/14/30/60/100) instead of a plain counter | S–M | Streak logic already computes milestones server-side; this is presentation only |
 | Ambient particle/glitch background reacting to character level or theme | M | Visual differentiator, but purely cosmetic — do last |
@@ -90,7 +91,7 @@ Ranked by impact vs. effort, given what's already built:
 - [x] Refresh the page → Level 2, 85 credits, 1-day streak, Intellect Lvl 2 all persisted — confirms real DB persistence, not localStorage
 - [x] Backend unit tests: `npm test` → 6/6 passing (leveling curve, difficulty rewards, streak transitions/milestones)
 - [ ] Login → logout → login again (not yet exercised)
-- [ ] Edit task, delete task
+- [x] Edit task, delete task — **found `updateMission` had no UI entry point at all (PS requires full CRUD); wired up an edit button and verified live: create → edit title → confirmed change → delete**
 - [ ] Break a streak deliberately (skip a day) and confirm it resets
 - [ ] Buy a shop item with insufficient credits → graceful failure, not a crash
 - [x] Submit an empty-title task → inline error confirmed in code path (frontend + backend both validate; not re-driven through the UI this pass)
