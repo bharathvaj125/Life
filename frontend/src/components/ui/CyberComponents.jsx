@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function CyberButton({
+export const CyberButton = React.forwardRef(function CyberButton({
   children,
   variant = 'primary', // 'primary' | 'secondary' | 'danger' | 'ghost'
   size = 'md', // 'sm' | 'md' | 'lg'
@@ -10,7 +10,7 @@ export function CyberButton({
   type = 'button',
   icon: Icon,
   ...props
-}) {
+}, ref) {
   const base =
     'relative inline-flex items-center justify-center font-telemetry uppercase tracking-wider font-semibold transition-all duration-200 select-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-45 outline-none focus:ring-2';
 
@@ -35,6 +35,7 @@ export function CyberButton({
 
   return (
     <button
+      ref={ref}
       type={type}
       disabled={disabled}
       onClick={onClick}
@@ -45,7 +46,7 @@ export function CyberButton({
       <span>{children}</span>
     </button>
   );
-}
+});
 
 export function CyberCard({
   children,
@@ -112,7 +113,14 @@ export function CyberProgressBar({ progressPct = 0, label, sublabel, color = 'cy
           <span className="text-[#E2E8F0] font-mono-cyber font-semibold">{sublabel || `${safeProgress}%`}</span>
         </div>
       )}
-      <div className={`w-full bg-[#07090E] border border-[#223254] p-0.5 ${height} overflow-hidden`}>
+      <div
+        role="progressbar"
+        aria-valuenow={Math.round(safeProgress)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={label || 'Progress'}
+        className={`w-full bg-[#07090E] border border-[#223254] p-0.5 ${height} overflow-hidden`}
+      >
         <div
           className={`h-full bg-gradient-to-r transition-all duration-500 ease-out ${colors[color]}`}
           style={{ width: `${safeProgress}%` }}

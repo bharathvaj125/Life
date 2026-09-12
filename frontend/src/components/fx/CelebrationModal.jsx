@@ -1,9 +1,26 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CyberCard, CyberButton } from '../ui/CyberComponents';
 import { Zap, Flame, Award, ArrowRight, X } from 'lucide-react';
 
 export function CelebrationModal({ celebration, onClose }) {
+  const acknowledgeRef = useRef(null);
+
+  useEffect(() => {
+    if (celebration && acknowledgeRef.current) {
+      acknowledgeRef.current.focus();
+    }
+  }, [celebration]);
+
+  useEffect(() => {
+    if (!celebration) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [celebration, onClose]);
+
   if (!celebration) return null;
 
   const isLevelUp = celebration.type === 'level_up';
@@ -11,7 +28,12 @@ export function CelebrationModal({ celebration, onClose }) {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="celebration-heading"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.8, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -24,6 +46,11 @@ export function CelebrationModal({ celebration, onClose }) {
             glowColor={isLevelUp ? 'cyan' : 'amber'}
             className="p-8 text-center space-y-6 border-2"
           >
+            <div className="sr-only" role="status" aria-live="assertive">
+              {isLevelUp
+                ? `Level up! You reached level ${data.newLevel}.`
+                : `${data.streak} day streak milestone reached. Bonus credits awarded.`}
+            </div>
             {/* Holographic Header Icon */}
             <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
               <div
@@ -52,7 +79,7 @@ export function CelebrationModal({ celebration, onClose }) {
                 {isLevelUp ? 'NEURAL UPLINK OVERCLOCK' : 'UPLINK STREAK MILESTONE'}
               </span>
 
-              <h2 className="font-display text-3xl font-black tracking-wide text-white uppercase mt-2">
+              <h2 id="celebration-heading" className="font-display text-3xl font-black tracking-wide text-white uppercase mt-2">
                 {isLevelUp ? `LEVEL ${data.newLevel} REACHED` : `${data.streak}-DAY STREAK`}
               </h2>
 
@@ -87,6 +114,7 @@ export function CelebrationModal({ celebration, onClose }) {
 
             {/* Acknowledge Button */}
             <CyberButton
+              ref={acknowledgeRef}
               variant={isLevelUp ? 'primary' : 'amber'}
               size="lg"
               className="w-full"

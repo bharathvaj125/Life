@@ -24,7 +24,7 @@ export function HeaderTelemetry({ activeTab, setActiveTab }) {
     <header className="sticky top-0 z-40 bg-[#07090E]/95 border-b border-[#223254] backdrop-blur-md">
       {/* Network Alert Banner */}
       {networkError && (
-        <div className="bg-[#FF0055]/15 border-b border-[#FF0055]/40 px-4 py-2 flex items-center justify-between text-xs text-[#FF85A2] font-telemetry">
+        <div role="alert" className="bg-[#FF0055]/15 border-b border-[#FF0055]/40 px-4 py-2 flex items-center justify-between text-xs text-[#FF85A2] font-telemetry">
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-[#FF0055] animate-pulse" />
             <span>CRITICAL ALERT: {networkError}</span>
@@ -71,6 +71,7 @@ export function HeaderTelemetry({ activeTab, setActiveTab }) {
           <nav className="hidden md:flex items-center gap-1 border-l border-[#223254] pl-4">
             <button
               onClick={() => setActiveTab('missions')}
+              aria-current={activeTab === 'missions' ? 'page' : undefined}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-telemetry uppercase tracking-wider transition-colors cursor-pointer ${
                 activeTab === 'missions'
                   ? 'bg-[#00F0FF]/15 text-[#00F0FF] border-b-2 border-[#00F0FF]'
@@ -82,6 +83,7 @@ export function HeaderTelemetry({ activeTab, setActiveTab }) {
             </button>
             <button
               onClick={() => setActiveTab('shop')}
+              aria-current={activeTab === 'shop' ? 'page' : undefined}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-telemetry uppercase tracking-wider transition-colors cursor-pointer ${
                 activeTab === 'shop'
                   ? 'bg-[#00F0FF]/15 text-[#00F0FF] border-b-2 border-[#00F0FF]'
@@ -153,6 +155,7 @@ export function HeaderTelemetry({ activeTab, setActiveTab }) {
       <div className="flex md:hidden border-t border-[#223254] bg-[#0D121F]">
         <button
           onClick={() => setActiveTab('missions')}
+          aria-current={activeTab === 'missions' ? 'page' : undefined}
           className={`flex-1 py-2 text-xs font-telemetry uppercase tracking-wider text-center ${
             activeTab === 'missions' ? 'text-[#00F0FF] border-b-2 border-[#00F0FF] bg-[#00F0FF]/10' : 'text-[#94A3B8]'
           }`}
@@ -161,6 +164,7 @@ export function HeaderTelemetry({ activeTab, setActiveTab }) {
         </button>
         <button
           onClick={() => setActiveTab('shop')}
+          aria-current={activeTab === 'shop' ? 'page' : undefined}
           className={`flex-1 py-2 text-xs font-telemetry uppercase tracking-wider text-center ${
             activeTab === 'shop' ? 'text-[#00F0FF] border-b-2 border-[#00F0FF] bg-[#00F0FF]/10' : 'text-[#94A3B8]'
           }`}

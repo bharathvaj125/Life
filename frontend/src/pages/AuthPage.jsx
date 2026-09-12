@@ -56,6 +56,7 @@ export function AuthPage() {
           <div className="flex border-b border-[#223254] pb-4">
             <button
               type="button"
+              aria-pressed={!isSignup}
               onClick={() => {
                 setIsSignup(false);
                 setError('');
@@ -70,6 +71,7 @@ export function AuthPage() {
             </button>
             <button
               type="button"
+              aria-pressed={isSignup}
               onClick={() => {
                 setIsSignup(true);
                 setError('');
@@ -85,7 +87,7 @@ export function AuthPage() {
           </div>
 
           {error && (
-            <div className="p-3 bg-[#FF0055]/15 border border-[#FF0055]/40 text-xs text-[#FF85A2] font-telemetry flex items-start gap-2">
+            <div role="alert" className="p-3 bg-[#FF0055]/15 border border-[#FF0055]/40 text-xs text-[#FF85A2] font-telemetry flex items-start gap-2">
               <span className="font-bold text-[#FF0055]">[DENIED]</span>
               <span>{error}</span>
             </div>
@@ -95,12 +97,13 @@ export function AuthPage() {
             {isSignup ? (
               <>
                 <div>
-                  <label className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
+                  <label htmlFor="auth-username" className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
                     Operative Codename (Username) *
                   </label>
                   <div className="relative">
                     <User className="w-4 h-4 text-[#64748B] absolute left-3 top-2.5" />
                     <input
+                      id="auth-username"
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
@@ -112,12 +115,13 @@ export function AuthPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
+                  <label htmlFor="auth-email" className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
                     Uplink Email *
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-[#64748B] absolute left-3 top-2.5" />
                     <input
+                      id="auth-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -130,12 +134,13 @@ export function AuthPage() {
               </>
             ) : (
               <div>
-                <label className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
+                <label htmlFor="auth-identifier" className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
                   Codename or Uplink Email *
                 </label>
                 <div className="relative">
                   <User className="w-4 h-4 text-[#64748B] absolute left-3 top-2.5" />
                   <input
+                    id="auth-identifier"
                     type="text"
                     value={emailOrUsername}
                     onChange={(e) => setEmailOrUsername(e.target.value)}
@@ -148,18 +153,20 @@ export function AuthPage() {
             )}
 
             <div>
-              <label className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
+              <label htmlFor="auth-password" className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
                 Access Encryption Key (Password) *
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-[#64748B] absolute left-3 top-2.5" />
                 <input
+                  id="auth-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Min. 8 characters"
                   className="w-full bg-[#07090E] border border-[#223254] focus:border-[#00F0FF] pl-9 pr-3 py-2 text-sm text-[#E2E8F0] outline-none font-sans"
                   required
+                  minLength={8}
                 />
               </div>
             </div>

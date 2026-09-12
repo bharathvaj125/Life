@@ -83,6 +83,7 @@ export function MissionHub() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setFilter('active')}
+            aria-pressed={filter === 'active'}
             className={`px-3 py-1.5 text-xs font-telemetry uppercase tracking-wider font-semibold cursor-pointer transition-all ${
               filter === 'active'
                 ? 'bg-[#00F0FF] text-[#07090E] font-bold shadow-[0_0_10px_rgba(0,240,255,0.4)]'
@@ -93,6 +94,7 @@ export function MissionHub() {
           </button>
           <button
             onClick={() => setFilter('completed')}
+            aria-pressed={filter === 'completed'}
             className={`px-3 py-1.5 text-xs font-telemetry uppercase tracking-wider font-semibold cursor-pointer transition-all ${
               filter === 'completed'
                 ? 'bg-[#00F0FF] text-[#07090E] font-bold shadow-[0_0_10px_rgba(0,240,255,0.4)]'
@@ -103,6 +105,7 @@ export function MissionHub() {
           </button>
           <button
             onClick={() => setFilter('all')}
+            aria-pressed={filter === 'all'}
             className={`px-3 py-1.5 text-xs font-telemetry uppercase tracking-wider font-semibold cursor-pointer transition-all ${
               filter === 'all'
                 ? 'bg-[#00F0FF] text-[#07090E] font-bold shadow-[0_0_10px_rgba(0,240,255,0.4)]'
@@ -142,17 +145,18 @@ export function MissionHub() {
           </div>
 
           {formError && (
-            <div className="mb-4 p-2.5 bg-[#FF0055]/15 border border-[#FF0055]/40 text-xs text-[#FF85A2] font-telemetry">
+            <div role="alert" className="mb-4 p-2.5 bg-[#FF0055]/15 border border-[#FF0055]/40 text-xs text-[#FF85A2] font-telemetry">
               {formError}
             </div>
           )}
 
           <form onSubmit={handleCreateSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
+              <label htmlFor="mission-title" className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
                 Mission Directive *
               </label>
               <input
+                id="mission-title"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -164,10 +168,11 @@ export function MissionHub() {
             </div>
 
             <div>
-              <label className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
+              <label htmlFor="mission-description" className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
                 Briefing / Notes (Optional)
               </label>
               <textarea
+                id="mission-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Key sub-vectors, deliverables, or objectives..."
@@ -178,10 +183,11 @@ export function MissionHub() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Difficulty Selector */}
               <div>
-                <label className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
+                <label htmlFor="mission-difficulty" className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
                   Threat / Difficulty Tier
                 </label>
                 <select
+                  id="mission-difficulty"
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value)}
                   className="w-full bg-[#07090E] border border-[#223254] focus:border-[#00F0FF] px-3 py-2 text-sm text-[#E2E8F0] outline-none font-telemetry uppercase"
@@ -196,10 +202,11 @@ export function MissionHub() {
 
               {/* Target Attribute */}
               <div>
-                <label className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
+                <label htmlFor="mission-attribute" className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
                   Neural Attribute
                 </label>
                 <select
+                  id="mission-attribute"
                   value={attribute}
                   onChange={(e) => setAttribute(e.target.value)}
                   className="w-full bg-[#07090E] border border-[#223254] focus:border-[#00F0FF] px-3 py-2 text-sm text-[#E2E8F0] outline-none font-telemetry"
@@ -214,10 +221,11 @@ export function MissionHub() {
 
               {/* Due Date */}
               <div>
-                <label className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
+                <label htmlFor="mission-due-date" className="block text-xs font-telemetry uppercase tracking-wider text-[#94A3B8] mb-1">
                   Target Due Date (Optional)
                 </label>
                 <input
+                  id="mission-due-date"
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}

@@ -90,6 +90,7 @@ export function BlackMarketShop() {
           <div className="flex bg-[#07090E] border border-[#223254] p-1">
             <button
               onClick={() => setActiveTab('catalog')}
+              aria-pressed={activeTab === 'catalog'}
               className={`px-3 py-1.5 text-xs font-telemetry uppercase tracking-wider font-semibold cursor-pointer ${
                 activeTab === 'catalog' ? 'bg-[#00F0FF] text-[#07090E]' : 'text-[#94A3B8] hover:text-white'
               }`}
@@ -98,6 +99,7 @@ export function BlackMarketShop() {
             </button>
             <button
               onClick={() => setActiveTab('inventory')}
+              aria-pressed={activeTab === 'inventory'}
               className={`px-3 py-1.5 text-xs font-telemetry uppercase tracking-wider font-semibold cursor-pointer ${
                 activeTab === 'inventory' ? 'bg-[#00F0FF] text-[#07090E]' : 'text-[#94A3B8] hover:text-white'
               }`}
@@ -110,6 +112,8 @@ export function BlackMarketShop() {
 
       {statusMsg && (
         <div
+          role="status"
+          aria-live="polite"
           className={`p-3 text-xs font-telemetry border flex items-center gap-2 ${
             statusMsg.type === 'success'
               ? 'bg-[#00FF9D]/15 border-[#00FF9D]/40 text-[#00FF9D]'
