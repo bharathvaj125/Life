@@ -9,11 +9,19 @@ hackathon rulebook.
 
 ## Stack
 
-- **Frontend**: React 19 + Vite, Tailwind CSS, Framer Motion, `canvas-confetti` — cyberpunk
-  "Command Terminal" theme
+- **Frontend**: React 19 + Vite, Tailwind CSS, Framer Motion, `canvas-confetti`, `html-to-image`
+  (Operative Card PNG export) — cyberpunk "Command Terminal" theme
 - **Backend**: Node.js (ESM) + Express 4, JWT + bcrypt auth, per-user data isolation, rate limiting
 - **Database**: SQLite via `better-sqlite3` (file-based; swappable for Postgres later without
   touching route logic, since all access goes through `backend/src/db/index.js`)
+
+## Disclosure
+
+Per the hackathon rulebook's requirement to disclose third-party libraries, frameworks, and AI
+tools: this project was built with AI pair-programming assistance (Claude Code) alongside manual
+development and review. Every third-party package in use is listed above and in
+`backend/package.json` / `frontend/package.json`; no UI templates or boilerplate beyond Vite's
+standard React scaffold were used.
 
 ## Core systems
 
