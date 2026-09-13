@@ -1,4 +1,5 @@
 import { v4 as uuid } from 'uuid';
+import { pathToFileURL } from 'url';
 import db from './index.js';
 
 const items = [
@@ -60,17 +61,25 @@ const items = [
   },
 ];
 
-const insert = db.prepare(
-  `INSERT OR IGNORE INTO shop_items (id, name, description, cost, category, icon) VALUES (?, ?, ?, ?, ?, ?)`
-);
-const existing = db.prepare('SELECT COUNT(*) as c FROM shop_items').get();
+export function ensureShopSeeded() {
+  const insert = db.prepare(
+    `INSERT OR IGNORE INTO shop_items (id, name, description, cost, category, icon) VALUES (?, ?, ?, ?, ?, ?)`
+  );
+  const existing = db.prepare('SELECT COUNT(*) as c FROM shop_items').get();
 
-if (existing.c === 0) {
-  const tx = db.transaction((rows) => {
-    for (const it of rows) insert.run(uuid(), it.name, it.description, it.cost, it.category, it.icon);
-  });
-  tx(items);
-  console.log(`Seeded ${items.length} Cyberpunk Black Market shop items.`);
-} else {
+  if (existing.c === 0) {
+    const tx = db.transaction((rows) => {
+      for (const it of rows) insert.run(uuid(), it.name, it.description, it.cost, it.category, it.icon);
+    });
+    tx(items);
+    console.log(`Seeded ${items.length} Cyberpunk Black Market shop items.`);
+    return items.length;
+  }
   console.log('Shop already seeded, skipping.');
+  return 0;
+}
+
+// Allow `npm run seed` to still work as a standalone script for local dev.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  ensureShopSeeded();
 }

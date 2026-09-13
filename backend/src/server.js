@@ -8,6 +8,9 @@ import taskRoutes from './routes/tasks.js';
 import characterRoutes from './routes/character.js';
 import shopRoutes from './routes/shop.js';
 import './db/index.js'; // ensures schema is created on boot
+import { ensureShopSeeded } from './db/seed.js';
+
+ensureShopSeeded();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
