@@ -32,7 +32,7 @@ export function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen cyber-grid-bg scanline flex flex-col justify-center items-center p-4">
+    <main className="min-h-screen cyber-grid-bg scanline flex flex-col justify-center items-center p-4">
       {/* Glow Orbs */}
       <div className="fixed top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#00F0FF]/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -190,6 +190,6 @@ export function AuthPage() {
           </div>
         </CyberCard>
       </div>
-    </div>
+    </main>
   );
 }

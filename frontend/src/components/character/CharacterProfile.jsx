@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useGame } from '../../context/GameContext';
 import { CyberCard, CyberBadge, CyberProgressBar, CyberButton } from '../ui/CyberComponents';
 import { AchievementsPanel } from './AchievementsPanel';
-import { ShareCardModal } from './ShareCardModal';
 import {
   Brain,
   Dumbbell,
@@ -15,6 +14,10 @@ import {
   Cpu,
   Share2,
 } from 'lucide-react';
+
+// html-to-image is only needed if the user actually opens the export dialog —
+// keep it out of the dashboard's main chunk.
+const ShareCardModal = lazy(() => import('./ShareCardModal').then((m) => ({ default: m.ShareCardModal })));
 
 const ICON_MAP = {
   brain: Brain,
@@ -114,14 +117,18 @@ export function CharacterProfile() {
       {/* Uplink Commendations (Achievements) */}
       <AchievementsPanel achievements={achievements} />
 
-      <ShareCardModal
-        isOpen={shareOpen}
-        onClose={() => setShareOpen(false)}
-        user={user}
-        levelState={levelState}
-        attributes={attributes}
-        achievements={achievements}
-      />
+      {shareOpen && (
+        <Suspense fallback={null}>
+          <ShareCardModal
+            isOpen={shareOpen}
+            onClose={() => setShareOpen(false)}
+            user={user}
+            levelState={levelState}
+            attributes={attributes}
+            achievements={achievements}
+          />
+        </Suspense>
+      )}
 
       {/* Attribute Matrix */}
       <CyberCard className="p-5 space-y-4">
