@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useGame } from '../../context/GameContext';
-import { CyberCard, CyberBadge, CyberProgressBar } from '../ui/CyberComponents';
+import { CyberCard, CyberBadge, CyberProgressBar, CyberButton } from '../ui/CyberComponents';
 import { AchievementsPanel } from './AchievementsPanel';
+import { ShareCardModal } from './ShareCardModal';
 import {
   Brain,
   Dumbbell,
@@ -12,6 +13,7 @@ import {
   Activity,
   Award,
   Cpu,
+  Share2,
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -26,6 +28,7 @@ const ICON_MAP = {
 export function CharacterProfile() {
   const { user } = useAuth();
   const { levelState, attributes, activityLogs, achievements, loadingCharacter } = useGame();
+  const [shareOpen, setShareOpen] = useState(false);
 
   if (loadingCharacter) {
     return (
@@ -96,10 +99,29 @@ export function CharacterProfile() {
             </span>
           </div>
         </div>
+
+        <CyberButton
+          variant="secondary"
+          size="sm"
+          icon={Share2}
+          className="w-full"
+          onClick={() => setShareOpen(true)}
+        >
+          Export Operative Card
+        </CyberButton>
       </CyberCard>
 
       {/* Uplink Commendations (Achievements) */}
       <AchievementsPanel achievements={achievements} />
+
+      <ShareCardModal
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        user={user}
+        levelState={levelState}
+        attributes={attributes}
+        achievements={achievements}
+      />
 
       {/* Attribute Matrix */}
       <CyberCard className="p-5 space-y-4">
