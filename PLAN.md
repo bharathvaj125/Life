@@ -38,26 +38,21 @@ Core RPG systems (auth, CRUD, non-linear leveling, streaks, attributes, economy)
 
 ---
 
-## Phase 3 — Deployment — prepped, blocked on your login
+## Phase 3 — Deployment ✅ DONE (one follow-up open)
 *Maps to: PS §4 "Live Deployed URL", Rulebook zero-tolerance "Build/Deployment Failure"*
 
-**Decision made (Option A):** frontend → Vercel, backend → Railway (persistent volume, SQLite untouched — least code change under time pressure).
+- **App:** https://life-rpg-frontend-two.vercel.app
+- **API:** https://life-rpg-backend-production-3656.up.railway.app
 
-**Done:**
-- [x] `backend/Procfile` added (`web: npm start`) for Procfile-based hosts
-- [x] README's Deployment section documents the Vercel/Railway split and why
-- [x] Verified `npm run build` succeeds cleanly for the frontend
+- [x] Frontend deployed to Vercel (auto-connected to the GitHub repo for future auto-deploys on push)
+- [x] Backend deployed to Railway, `JWT_SECRET`/`DB_PATH`/`CORS_ORIGIN` set
+- [x] `CORS_ORIGIN` ↔ `VITE_API_URL` wired to each other's real URLs; verified with a live CORS preflight check
+- [x] Shop auto-seeds on boot now (see Phase 4-adjacent fix below) — no manual seed step needed on any host
+- [x] Full live flow verified via direct API calls: signup → create mission (epic) → complete → **leveled up to 2, 60 XP, 85 credits, streak 1** → fresh GET (refresh-equivalent) confirms all of it persisted → shop has 8 items → "First Blood" achievement unlocked
+- [ ] **Open:** attaching a persistent volume to the Railway backend failed with a generic API error — most likely a plan/billing restriction on a brand-new account (volumes commonly need a payment method on file). Data survives as long as the container doesn't restart/redeploy, but isn't guaranteed long-term yet. Fix: add a payment method on Railway's dashboard, then ask to attach the volume (I won't handle billing/payment myself)
+- [ ] `og:url` and a real `og:image` in `frontend/index.html` — low priority now that a domain exists
 
-**Blocked on you — one manual step, ~2 minutes each:**
-Neither Vercel CLI nor Railway CLI is authenticated in this environment, and logging in requires an OAuth/email flow only you can complete (I don't hold your credentials and won't create accounts on your behalf). Once you've logged in once:
-
-- [ ] `cd frontend && vercel --prod` (or connect the repo at vercel.com, set root directory to `frontend`)
-- [ ] Deploy `backend/` to Railway, **mount a persistent volume at the `DB_PATH` directory** (default `backend/data`) — without this the SQLite file resets on every redeploy, which is exactly what the rulebook's "Fake Data Persistence" rule zeroes out
-- [ ] Set backend `CORS_ORIGIN` to the deployed frontend URL, and frontend `VITE_API_URL` to the deployed backend URL
-- [ ] Re-run the full flow against the **live** URLs: signup → create mission → complete mission → refresh → data still there
-- [ ] Add `og:url` and a real `og:image` to `frontend/index.html` now that a domain exists (Phase 2 leftover)
-
-Tell me once you've logged into Vercel/Railway and I'll drive the rest (env vars, redeploys, verification) from here.
+**Extra fix made during deploy:** `npm run seed` only ever worked against a local file, so it was useless for any deployed instance (no way to run a one-off script against a remote container's filesystem without SSH). Moved the idempotent seed logic into `ensureShopSeeded()`, called once at server boot — verified in the Railway logs ("Seeded 8 Cyberpunk Black Market shop items.").
 
 ---
 

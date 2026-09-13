@@ -148,10 +148,13 @@ isolation from Express/SQLite (`backend/tests/rpgEngine.test.js`).
 
 ## Live deployment
 
-_Not yet deployed — see [`PLAN.md`](./PLAN.md) Phase 3._
+- **App:** https://life-rpg-frontend-two.vercel.app
+- **API:** https://life-rpg-backend-production-3656.up.railway.app
 
 ## Status
 
-Core RPG systems (auth, CRUD, non-linear leveling, streaks, attributes, economy), theming, and
-an accessibility/robustness hardening pass are complete and tested. Remaining work — deployment,
-QA pass on the live build, and the walkthrough video — is tracked in [`PLAN.md`](./PLAN.md).
+Core RPG systems (auth, CRUD, non-linear leveling, streaks, attributes, economy), theming,
+accessibility/robustness hardening, and a real achievement system are complete, tested, and
+verified live end-to-end (signup → create/complete a mission → level up → refresh → data
+persists). Remaining work — a persistent volume on the backend host and the walkthrough video —
+is tracked in [`PLAN.md`](./PLAN.md).
