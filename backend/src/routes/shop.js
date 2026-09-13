@@ -19,8 +19,14 @@ router.get('/items', async (req, res, next) => {
 
 router.get('/inventory', async (req, res, next) => {
   try {
+    // Select shop_items' columns explicitly rather than `si.*` — that column
+    // set includes its own `id`, which silently clobbered inv.id (last
+    // duplicate-named column wins) and left inv.item_id unselected entirely,
+    // so the frontend's Equip button was calling the API with an undefined
+    // item id.
     const rows = await db.all(
-      `SELECT inv.id, inv.equipped, inv.acquired_at, si.* FROM inventory inv
+      `SELECT inv.id, inv.item_id, inv.equipped, inv.acquired_at, si.name, si.description, si.cost, si.category, si.icon
+       FROM inventory inv
        JOIN shop_items si ON si.id = inv.item_id
        WHERE inv.user_id = ? ORDER BY inv.acquired_at DESC`,
       req.userId
