@@ -29,67 +29,79 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-router.post('/signup', (req, res) => {
-  const { username, email, password } = req.body || {};
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: 'Username, email, and password are all required.' });
-  }
-  if (username.trim().length < 3 || username.length > 20) {
-    return res.status(400).json({ error: 'Username must be between 3 and 20 characters.' });
-  }
-  if (!isValidEmail(email)) {
-    return res.status(400).json({ error: 'Please provide a valid email address.' });
-  }
-  if (password.length < 8) {
-    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
-  }
-
-  const existing = db.prepare('SELECT id FROM users WHERE email = ? OR username = ?').get(email, username);
-  if (existing) {
-    return res.status(409).json({ error: 'An operative with that codename or uplink email already exists.' });
-  }
-
-  const id = uuid();
-  const hash = bcrypt.hashSync(password, 10);
-
-  const tx = db.transaction(() => {
-    db.prepare(
-      `INSERT INTO users (id, username, email, password_hash, credits, avatar_theme) VALUES (?, ?, ?, ?, 50, 'netrunner')`
-    ).run(id, username.trim(), email.toLowerCase().trim(), hash);
-
-    const insertAttr = db.prepare(
-      `INSERT INTO attributes (id, user_id, name, icon) VALUES (?, ?, ?, ?)`
-    );
-    for (const attr of DEFAULT_ATTRIBUTES) {
-      insertAttr.run(uuid(), id, attr.name, attr.icon);
+router.post('/signup', async (req, res, next) => {
+  try {
+    const { username, email, password } = req.body || {};
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'Username, email, and password are all required.' });
+    }
+    if (username.trim().length < 3 || username.length > 20) {
+      return res.status(400).json({ error: 'Username must be between 3 and 20 characters.' });
+    }
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'Please provide a valid email address.' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters.' });
     }
 
-    db.prepare(
-      `INSERT INTO activity_log (id, user_id, type, message) VALUES (?, ?, 'system', 'Neural Uplink Initialized. Welcome to Night City Grid.')`
-    ).run(uuid(), id);
-  });
-  tx();
+    const existing = await db.get('SELECT id FROM users WHERE email = ? OR username = ?', email, username);
+    if (existing) {
+      return res.status(409).json({ error: 'An operative with that codename or uplink email already exists.' });
+    }
 
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
-  const token = signToken(id);
-  res.status(201).json({ token, user: sanitizeUser(user) });
+    const id = uuid();
+    const hash = bcrypt.hashSync(password, 10);
+
+    await db.transaction(async (tx) => {
+      await tx.run(
+        `INSERT INTO users (id, username, email, password_hash, credits, avatar_theme) VALUES (?, ?, ?, ?, 50, 'netrunner')`,
+        id,
+        username.trim(),
+        email.toLowerCase().trim(),
+        hash
+      );
+
+      for (const attr of DEFAULT_ATTRIBUTES) {
+        await tx.run(`INSERT INTO attributes (id, user_id, name, icon) VALUES (?, ?, ?, ?)`, uuid(), id, attr.name, attr.icon);
+      }
+
+      await tx.run(
+        `INSERT INTO activity_log (id, user_id, type, message) VALUES (?, ?, 'system', 'Neural Uplink Initialized. Welcome to Night City Grid.')`,
+        uuid(),
+        id
+      );
+    });
+
+    const user = await db.get('SELECT * FROM users WHERE id = ?', id);
+    const token = signToken(id);
+    res.status(201).json({ token, user: sanitizeUser(user) });
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post('/login', (req, res) => {
-  const { emailOrUsername, password } = req.body || {};
-  if (!emailOrUsername || !password) {
-    return res.status(400).json({ error: 'Email/username and password are required.' });
-  }
-  const user = db
-    .prepare('SELECT * FROM users WHERE email = ? OR username = ?')
-    .get(emailOrUsername.toLowerCase().trim(), emailOrUsername.trim());
+router.post('/login', async (req, res, next) => {
+  try {
+    const { emailOrUsername, password } = req.body || {};
+    if (!emailOrUsername || !password) {
+      return res.status(400).json({ error: 'Email/username and password are required.' });
+    }
+    const user = await db.get(
+      'SELECT * FROM users WHERE email = ? OR username = ?',
+      emailOrUsername.toLowerCase().trim(),
+      emailOrUsername.trim()
+    );
 
-  if (!user || !bcrypt.compareSync(password, user.password_hash)) {
-    return res.status(401).json({ error: 'Access Denied: Invalid credentials.' });
-  }
+    if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+      return res.status(401).json({ error: 'Access Denied: Invalid credentials.' });
+    }
 
-  const token = signToken(user.id);
-  res.json({ token, user: sanitizeUser(user) });
+    const token = signToken(user.id);
+    res.json({ token, user: sanitizeUser(user) });
+  } catch (err) {
+    next(err);
+  }
 });
 
 export default router;

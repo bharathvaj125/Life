@@ -12,8 +12,9 @@ hackathon rulebook.
 - **Frontend**: React 19 + Vite, Tailwind CSS, Framer Motion, `canvas-confetti`, `html-to-image`
   (Operative Card PNG export) — cyberpunk "Command Terminal" theme
 - **Backend**: Node.js (ESM) + Express 4, JWT + bcrypt auth, per-user data isolation, rate limiting
-- **Database**: SQLite via `better-sqlite3` (file-based; swappable for Postgres later without
-  touching route logic, since all access goes through `backend/src/db/index.js`)
+- **Database**: PostgreSQL via Supabase (accessed with `pg`; every query goes through
+  `backend/src/db/index.js`, a thin async adapter kept close to the shape of a prepared-statement
+  API so route code stays simple)
 
 ## Disclosure
 
@@ -41,14 +42,15 @@ standard React scaffold were used.
 life-rpg/
 ├── backend/
 │   ├── src/
-│   │   ├── db/            # SQLite connection + schema (auto-migrates on boot), seed script
+│   │   ├── db/            # Postgres connection + schema (auto-migrates on boot), seed script
 │   │   ├── middleware/     # JWT verification
 │   │   ├── routes/         # auth, tasks, character, shop
 │   │   ├── utils/          # rpgEngine.js — leveling curve, streak logic, difficulty rewards
-│   │   └── server.js
+│   │   ├── app.js           # Express app (shared by the local dev server)
+│   │   └── server.js        # local dev entrypoint (`node src/server.js`)
 │   ├── tests/               # unit tests for the RPG engine
 │   ├── .env.example
-│   └── Procfile              # for Procfile-based hosts (Railway/Render)
+│   └── vercel.json           # deploys src/server.js directly as a Vercel service
 ├── frontend/
 │   ├── src/
 │   │   ├── components/     # layout, character, missions, shop, fx (celebration modal), ui
@@ -65,10 +67,9 @@ life-rpg/
 
 ```bash
 cd backend
-cp .env.example .env      # edit JWT_SECRET before deploying anywhere real
+cp .env.example .env      # set DATABASE_URL to a Postgres instance (e.g. a Supabase project) and a real JWT_SECRET
 npm install
-npm run seed               # populates the shop with starter items
-npm run dev                 # or `npm start` for a non-watching run
+npm run dev                 # or `npm start` for a non-watching run — auto-seeds the shop and migrates the schema on boot
 ```
 
 `GET /api/health` confirms it's alive. `npm test` runs the RPG engine unit tests.
@@ -91,7 +92,7 @@ npm run dev
 | `PORT` | Port the API listens on (default `4000`) |
 | `JWT_SECRET` | Secret used to sign session tokens — **must** be changed for production |
 | `CORS_ORIGIN` | Comma-separated list of allowed frontend origins |
-| `DB_PATH` | Path to the SQLite database file |
+| `DATABASE_URL` | Postgres connection string (a Supabase project's pooled connection URI works well) |
 
 **`frontend/.env.example`**
 
@@ -143,26 +144,35 @@ npm run dev
   Overall" but "Level 20 Intellect" if they've been reading a lot.
 
 All of this logic lives in `backend/src/utils/rpgEngine.js` as pure functions, unit-tested in
-isolation from Express/SQLite (`backend/tests/rpgEngine.test.js`).
+isolation from Express/Postgres (`backend/tests/rpgEngine.test.js`).
 
 ## Deployment
 
-- **Frontend**: deploy `frontend/` to Vercel (zero-config Vite detection; build `vite build`,
-  output `dist`). Set `VITE_API_URL` to the deployed backend URL.
-- **Backend**: `better-sqlite3` is a native module writing to a local file, so it needs a host
-  with a persistent filesystem across restarts (e.g. Railway with a volume mounted at the
-  `DB_PATH` directory) rather than a stateless serverless platform. `backend/Procfile` is ready
-  for Procfile-based hosts. Set `CORS_ORIGIN` to the deployed frontend URL.
+Both frontend and backend run on Vercel, with Supabase as the database — everything on free
+tiers, no paid plan required:
+
+- **Frontend**: `frontend/` deployed to Vercel with zero-config Vite detection (build `vite build`,
+  output `dist`). `VITE_API_URL` points at the backend's URL.
+- **Backend**: `backend/` deployed to Vercel as a native Node.js **service** (Vercel detects the
+  Express app and runs `src/server.js` directly per `backend/vercel.json` — not the older
+  per-request serverless-function model, so no cold-start-per-route wrapper is needed). `CORS_ORIGIN`
+  points at the frontend's URL, `DATABASE_URL` points at the Supabase project.
+- **Database**: a free Supabase Postgres project. Schema creation and shop seeding both run
+  automatically on boot (`initSchema()` / `ensureShopSeeded()` in `backend/src/app.js`), so a
+  fresh Supabase project needs zero manual setup.
+  ⚠️ Supabase's free tier pauses a project after **7 days with no API activity** — visiting the
+  live app periodically (daily is comfortably enough) keeps it from pausing.
 
 ## Live deployment
 
 - **App:** https://life-rpg-frontend-two.vercel.app
-- **API:** https://life-rpg-backend-production-3656.up.railway.app
+- **API:** https://life-rpg-backend-navy.vercel.app
 
 ## Status
 
 Core RPG systems (auth, CRUD, non-linear leveling, streaks, attributes, economy), theming,
 accessibility/robustness hardening, and a real achievement system are complete, tested, and
 verified live end-to-end (signup → create/complete a mission → level up → refresh → data
-persists). Remaining work — a persistent volume on the backend host and the walkthrough video —
-is tracked in [`PLAN.md`](./PLAN.md).
+persists) — on the current Vercel + Supabase stack specifically, after migrating off an earlier
+Railway + SQLite deployment to remove any trial-expiry risk before judging. Remaining item — the
+walkthrough video — is tracked in [`PLAN.md`](./PLAN.md).

@@ -1,5 +1,4 @@
 import { v4 as uuid } from 'uuid';
-import { pathToFileURL } from 'url';
 import db from './index.js';
 
 const items = [
@@ -61,17 +60,20 @@ const items = [
   },
 ];
 
-export function ensureShopSeeded() {
-  const insert = db.prepare(
-    `INSERT OR IGNORE INTO shop_items (id, name, description, cost, category, icon) VALUES (?, ?, ?, ?, ?, ?)`
-  );
-  const existing = db.prepare('SELECT COUNT(*) as c FROM shop_items').get();
-
-  if (existing.c === 0) {
-    const tx = db.transaction((rows) => {
-      for (const it of rows) insert.run(uuid(), it.name, it.description, it.cost, it.category, it.icon);
-    });
-    tx(items);
+export async function ensureShopSeeded() {
+  const existing = await db.get('SELECT COUNT(*) as c FROM shop_items');
+  if (Number(existing.c) === 0) {
+    for (const it of items) {
+      await db.run(
+        `INSERT INTO shop_items (id, name, description, cost, category, icon) VALUES (?, ?, ?, ?, ?, ?)`,
+        uuid(),
+        it.name,
+        it.description,
+        it.cost,
+        it.category,
+        it.icon
+      );
+    }
     console.log(`Seeded ${items.length} Cyberpunk Black Market shop items.`);
     return items.length;
   }
@@ -80,6 +82,12 @@ export function ensureShopSeeded() {
 }
 
 // Allow `npm run seed` to still work as a standalone script for local dev.
+import { pathToFileURL } from 'url';
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  ensureShopSeeded();
+  ensureShopSeeded()
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 }

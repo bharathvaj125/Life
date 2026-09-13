@@ -1,19 +1,65 @@
-import Database from 'better-sqlite3';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import pg from 'pg';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, '../../data/liferpg.db');
+const { Pool } = pg;
 
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
-const db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+// Converts positional `?` placeholders (the better-sqlite3 style the rest of
+// this codebase was written against) into Postgres's `$1, $2, ...` style, in
+// order. Keeps every call site below identical to the pre-migration code.
+function toPgParams(sql) {
+  let i = 0;
+  return sql.replace(/\?/g, () => `$${++i}`);
+}
 
-// Initialize schema
-db.exec(`
+async function get(sql, ...params) {
+  const { rows } = await pool.query(toPgParams(sql), params);
+  return rows[0];
+}
+
+async function all(sql, ...params) {
+  const { rows } = await pool.query(toPgParams(sql), params);
+  return rows;
+}
+
+async function run(sql, ...params) {
+  const result = await pool.query(toPgParams(sql), params);
+  return { changes: result.rowCount };
+}
+
+/**
+ * Runs `fn` against a single dedicated connection wrapped in BEGIN/COMMIT, so
+ * the writes inside it are atomic — mirrors better-sqlite3's db.transaction().
+ * `fn` receives a { get, all, run } bound to that connection.
+ */
+async function transaction(fn) {
+  const client = await pool.connect();
+  const tx = {
+    get: async (sql, ...params) => (await client.query(toPgParams(sql), params)).rows[0],
+    all: async (sql, ...params) => (await client.query(toPgParams(sql), params)).rows,
+    run: async (sql, ...params) => {
+      const result = await client.query(toPgParams(sql), params);
+      return { changes: result.rowCount };
+    },
+  };
+  try {
+    await client.query('BEGIN');
+    const result = await fn(tx);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function initSchema() {
+  await pool.query(`
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
@@ -26,7 +72,7 @@ CREATE TABLE IF NOT EXISTS users (
   longest_streak INTEGER NOT NULL DEFAULT 0,
   last_active_date TEXT,
   avatar_theme TEXT NOT NULL DEFAULT 'netrunner',
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS attributes (
@@ -50,9 +96,9 @@ CREATE TABLE IF NOT EXISTS tasks (
   credit_reward INTEGER NOT NULL DEFAULT 5,
   status TEXT NOT NULL DEFAULT 'active',
   due_date TEXT,
-  completed_at TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS activity_log (
@@ -62,7 +108,7 @@ CREATE TABLE IF NOT EXISTS activity_log (
   message TEXT NOT NULL,
   xp_delta INTEGER DEFAULT 0,
   credit_delta INTEGER DEFAULT 0,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS shop_items (
@@ -79,13 +125,15 @@ CREATE TABLE IF NOT EXISTS inventory (
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   item_id TEXT NOT NULL REFERENCES shop_items(id),
   equipped INTEGER NOT NULL DEFAULT 0,
-  acquired_at TEXT NOT NULL DEFAULT (datetime('now')),
+  acquired_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(user_id, item_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id);
 CREATE INDEX IF NOT EXISTS idx_attributes_user ON attributes(user_id);
 CREATE INDEX IF NOT EXISTS idx_log_user ON activity_log(user_id);
-`);
+  `);
+}
 
+const db = { get, all, run, transaction, pool };
 export default db;

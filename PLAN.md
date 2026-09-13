@@ -51,21 +51,53 @@ Core RPG systems (auth, CRUD, non-linear leveling, streaks, attributes, economy)
 
 ---
 
-## Phase 3 — Deployment ✅ DONE (one follow-up open)
+## Phase 3 — Deployment ✅ DONE
 *Maps to: PS §4 "Live Deployed URL", Rulebook zero-tolerance "Build/Deployment Failure"*
 
 - **App:** https://life-rpg-frontend-two.vercel.app
-- **API:** https://life-rpg-backend-production-3656.up.railway.app
+- **API:** https://life-rpg-backend-navy.vercel.app
 
 - [x] Frontend deployed to Vercel (auto-connected to the GitHub repo for future auto-deploys on push)
-- [x] Backend deployed to Railway, `JWT_SECRET`/`DB_PATH`/`CORS_ORIGIN` set
+- [x] Backend deployed to Vercel as a native Node.js service (`vercel.json` service config, runs
+  `src/server.js` directly — see the 3.1 migration below for why this replaced Railway)
 - [x] `CORS_ORIGIN` ↔ `VITE_API_URL` wired to each other's real URLs; verified with a live CORS preflight check
-- [x] Shop auto-seeds on boot now (see Phase 4-adjacent fix below) — no manual seed step needed on any host
-- [x] Full live flow verified via direct API calls: signup → create mission (epic) → complete → **leveled up to 2, 60 XP, 85 credits, streak 1** → fresh GET (refresh-equivalent) confirms all of it persisted → shop has 8 items → "First Blood" achievement unlocked
-- [ ] **Open:** attaching a persistent volume to the Railway backend failed with a generic API error — most likely a plan/billing restriction on a brand-new account (volumes commonly need a payment method on file). Data survives as long as the container doesn't restart/redeploy, but isn't guaranteed long-term yet. Fix: add a payment method on Railway's dashboard, then ask to attach the volume (I won't handle billing/payment myself)
-- [ ] `og:url` and a real `og:image` in `frontend/index.html` — low priority now that a domain exists
+- [x] Shop auto-seeds on boot — no manual seed step needed on any host
+- [x] Full live flow verified via direct API calls against the production URLs: signup → create
+  mission (epic) → complete → level up → fresh GET confirms persistence → shop items → buy → equip
+  → edit/delete task, all working
 
-**Extra fix made during deploy:** `npm run seed` only ever worked against a local file, so it was useless for any deployed instance (no way to run a one-off script against a remote container's filesystem without SSH). Moved the idempotent seed logic into `ensureShopSeeded()`, called once at server boot — verified in the Railway logs ("Seeded 8 Cyberpunk Black Market shop items.").
+### Phase 3.1 — Migrated Railway → Vercel + Supabase (post-deploy)
+
+The original Railway + SQLite deployment worked, but two things made it wrong for this hackathon's
+actual timeline (Round 1 judging, then Round 2 results ~7 weeks later per the PS schedule):
+
+1. Railway's **free Trial is a one-time $5 credit that expires in 30 days** — a real risk of the
+   live link going dead before judging finishes, not just a persistence nice-to-have. Fixing it
+   properly meant either paying ($5/mo Hobby plan) or moving off Railway entirely.
+2. The user chose not to pay, so: migrated the database from local-file SQLite to a **free Supabase
+   Postgres project**, and moved the backend to **Vercel** (same platform as the frontend, no
+   trial-expiry risk, native support for running the Express app directly as a service).
+
+What changed:
+- `backend/src/db/index.js` rewritten as an async `pg`-based adapter (`get`/`all`/`run`/`transaction`),
+  kept close to the old better-sqlite3 call shape (`db.get(sql, ...params)` etc.) specifically to
+  minimize the blast radius on route code
+- All four route files (`auth.js`, `tasks.js`, `character.js`, `shop.js`) converted to `async`/`await`
+  with Postgres `$1,$2...` placeholders (handled transparently by the adapter)
+- Schema ported to Postgres (`TIMESTAMPTZ DEFAULT NOW()` in place of SQLite's `datetime('now')`);
+  `last_active_date`/`due_date` deliberately kept as plain `TEXT` so the streak-comparison logic in
+  `rpgEngine.js` needed zero changes
+- `backend/src/app.js` extracted from `server.js` so the same Express app can be started locally
+  (`node src/server.js`) or run natively as a Vercel service — no serverless-function wrapper needed,
+  Vercel's newer "services" deploy mode runs `src/server.js` directly
+- `rpgEngine.js` and `achievements.js` (pure functions, no DB access) untouched — all 10 unit tests
+  still pass unchanged, which is exactly why that separation was worth having
+
+**Known tradeoff:** Supabase's free tier pauses a project after 7 days of zero API activity. The
+user is visiting the live app daily, which is comfortably inside that window — if that stops, the
+project would need manual reactivation from the Supabase dashboard before the API responds again.
+
+- [ ] `og:url` and a real `og:image` in `frontend/index.html` — low priority, cosmetic
 
 ---
 
