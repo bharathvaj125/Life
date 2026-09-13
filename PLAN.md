@@ -26,15 +26,28 @@ Core RPG systems (auth, CRUD, non-linear leveling, streaks, attributes, economy)
 
 ---
 
-## Phase 2 — SEO & Performance Pass — mostly done, one item pending deploy
+## Phase 2 — SEO & Performance Pass ✅ DONE
 *Maps to: Rulebook "Performance & SEO"*
 
 - [x] Added Open Graph + Twitter Card meta tags and `theme-color` to `frontend/index.html`
-- [ ] `og:image` intentionally skipped for now — a real hosted image needs a live domain; add one post-deploy (Phase 3) and revisit `twitter:card` to `summary_large_image`
-- [ ] Run a Lighthouse pass once deployed; fix anything under ~85 on Performance/SEO/Accessibility
-- [x] Production build verified clean: `vite build` → 419KB JS / 130KB gzipped, no errors — reasonable size, nothing to trim right now
+- [x] Ran a real Lighthouse audit against the **live deployment** (not guessed from bundle size):
 
-**Commit:** `fa1dafe`
+  | Category | Before | After |
+  |---|---|---|
+  | Performance | 89 | 90 (LCP 3.2s → 2.7s) |
+  | Accessibility | 98 | **100** |
+  | Best Practices | 100 | 100 |
+  | SEO | 100 | 100 |
+
+  Fixed both real findings: the auth page had no `<main>` landmark (accessibility), and 69%
+  of the initial JS bundle was unused on first paint since the whole dashboard — missions,
+  shop, achievements, Framer Motion, `html-to-image` — loaded before a visitor even signs in.
+  Code-split the dashboard and the Operative Card export modal behind `React.lazy`/`Suspense`;
+  initial bundle dropped 447KB → 238KB, unused-JS waste dropped 98KB → 40KB.
+- [ ] `og:image` still intentionally skipped — nice-to-have, not a scored blocker
+- [x] Production build verified clean at every step
+
+**Commits:** `fa1dafe`, `5af169d`
 
 ---
 
